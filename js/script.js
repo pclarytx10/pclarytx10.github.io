@@ -75,7 +75,7 @@ getCoinData('bitcoin')
 
 // code snipet to format market cap
 function numberWithCommas(x) {
-    return x.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+    return x.toString().replace('/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g', ",");
 }
 
 // code snipet to prevent page refresh on enter in submit form
