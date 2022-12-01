@@ -1,4 +1,4 @@
-let globalData, coinList, coinID, coinData, coinRow, $newCrypto
+let globalData, globalMC, coinList, coinID, coinData, coinRow, $newCrypto
 
 // varibles needed for table
 let coinName, coinSymbol, coinUSD, coinMCap, coinATHPercent, coinATH, coinATHDate, coinMarkets
@@ -42,7 +42,8 @@ $.ajax({
         // console.log(globalData);
         let tempTCC = numberWithCommas(globalData.data.active_cryptocurrencies);
         let tempTMC = numberWithCommas(globalData.data.total_market_cap.usd.toFixed(0));
-        let tempMCC = numberWithCommas(globalData.data.market_cap_change_percentage_24h_usd.toFixed(1))
+        globalMC = globalData.data.total_market_cap.usd.toFixed(0);
+        let tempMCC = numberWithCommas(globalData.data.market_cap_change_percentage_24h_usd.toFixed(1));
         $ttlCurrencies.text(`${tempTCC}`);
         $ttlMarketCap.text(`$${tempTMC}`);
         $marketCapChange.text(`${tempMCC}%`);
@@ -64,7 +65,6 @@ $.ajax({
         // console.log(coinList[0]);
         // console.log(coinList.find((coin) => coin.symbol=="eth"));
 });
-
 
 // code snipet to format market cap
 function numberWithCommas(x) {
@@ -92,7 +92,7 @@ function coinLookUp(token) {
         // console.log(coinID);
         getCoinData(coinID)
     } else {
-        alert(`No Matching Coin Found`)
+        alert(`No matching coin found. If your coin name contains multiple words, try capitalizing the second word or formatting it as it appears on CoinGecko's website. Example: "Binance USD" If you have entered a coin ticker that was not found, please try using the full name of the coin. Example: Polygon instead of MATIC`)
     };
 }
 
@@ -108,16 +108,32 @@ function getCoinData(tokenID) {
     });
 }
 
+function formatCurrency(currency) {
+    if (currency < 0.01) {
+        return currency.toFixed(4)
+    } else if ( currency < 1000) {
+        return currency.toFixed(2)
+    } else {
+        return numberWithCommas(currency.toFixed(2))
+    }
+}
 function createTableRow(coinObj) {
     // console.log(coinObj);
     coinName = `<td>` + coinObj.name + `</td>` 
     // console.log(coinName);
     coinSymbol = `<td>` + coinObj.symbol.toUpperCase() + `</td>` 
-    coinUSD = `<td>$` + coinObj.market_data.current_price.usd.toFixed(4) + `</td>`
-    coinMCap = `<td>` + coinObj.market_data.market_cap_change_percentage_24h.toFixed(2) + `%</td>` 
+    // coinUSD = `<td>$` + numberWithCommas(coinObj.market_data.current_price.usd.toFixed(4)) + `</td>`
+    coinUSD = `<td>$` + formatCurrency(coinObj.market_data.current_price.usd) + `</td>`
+    let marketCap = coinObj.market_data.market_cap.usd / globalMC * 100
+    coinMCap = `<td>` + marketCap.toFixed(1) + `%</td>` 
     coinATHPercent = `<td>` + coinObj.market_data.ath_change_percentage.usd.toFixed(2) + `%</td>` 
-    coinATH = `<td>$` + coinObj.market_data.ath.usd.toFixed(4) + `</td>` 
-    coinATHDate = `<td>` + coinObj.market_data.ath_date.usd + `</td>` 
+    coinATH = `<td>$` + formatCurrency(coinObj.market_data.ath.usd) + `</td>` 
+    const newDate = new Date(coinObj.market_data.ath_date.usd).toLocaleDateString('en-US', {
+    day:   'numeric',
+    month: 'short',
+    year:  'numeric',
+    });
+    coinATHDate = `<td>` + newDate + `</td>` 
     coinMarkets = `<td>Test Value</td>` 
     let tableRow = `<tr>
                     ${coinName}
@@ -130,7 +146,7 @@ function createTableRow(coinObj) {
                     ${coinMarkets}
                     ${btnRow}
                     </tr>`
-    console.log(tableRow);
+    // console.log(tableRow);
     $("#coinsTable").append(tableRow)
 }
 
@@ -138,13 +154,18 @@ function createTableRow(coinObj) {
 $("#coinsTable").on("click", function (evt) {
     // console.log("Gonna Delete Somethnig....")
     const tgt = evt.target
-    const tgtTR = $(tgt).parentsUntil("tbody")
-    console.log($(tgtTR[1]))
-    $(tgtTR).remove()
+    if($(tgt).hasClass('btn-danger')) {
+        // console.log($(tgtTR[1]))
+        const tgtTR = $(tgt).parentsUntil("tbody")
+        $(tgtTR).remove()
+    } else {
+        // console.log('Not deleting this row...')
+    }
+
 })
 
 const exampleList = [
-    "Etherium or ETH",
+    "Ethereum or ETH",
     "Cardano or ADA",
     "Monero or XMR",
     "Polgon or MATIC",
@@ -154,7 +175,5 @@ const exampleList = [
 
 // write examples from array
 $.each(exampleList, function(index, value){
-    // $("#result").append(index + ": " + value + '<br>');
     $("#exaList").append(`<li>${value}</li>`)
-        console.log(value);
 });
