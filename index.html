@@ -14,9 +14,9 @@
             <h1>Welcome to CryptoList</h1>
             <p>Enter a cryptocurrency Name or Symbol to get started building your list.</p>
         </div>
-
+        
         <div id="formDiv">
-            <form class="row">
+            <form class="row" onSubmit="return false;">
                 <div class="col-auto">
                     <input id="cryptoInput" type="text" class="form-control" id="curInput" placeholder="bitcoin">
                 </div>
@@ -27,14 +27,14 @@
         </div>
 
         <div id="globalMC">
-            <p>Today, there are <span id="ttlCurrencies" style="color:blue">???</span> currencies and the global cryptocurrency market cap is <span id="ttlMarketCap" style="color:blue">???</span>.</p>
+            <p>Today, there are <span id="ttlCurrencies" style="color:blue">???</span> currencies and the global cryptocurrency market cap is <span id="ttlMarketCap" style="color:blue">???</span>. This is a <span id="mcChange" style="color:blue">???</span> change in the last 24 hours.</p>
         </div>
 
         <div id="tableDiv">
-            <table class="table text-center table-hover">
+            <table id="coinsTable" class="table text-center table-hover">
                 <tr>
                   <th>Name</th>
-                  <th>Symbol</th>
+                  <th>Symbol</th> 
                   <th data-toggle="tooltip" title="Price in USD">USD</th>
                   <th data-toggle="tooltip" title="% of Total Market Cap">%MC</th>
                   <th data-toggle="tooltip" title="Relation to ATH">%ATH</th>
@@ -44,7 +44,7 @@
                 </tr>
                 <tr>
                   <td>Bitcoin</td>
-                  <td>BTC</td>
+                  <td>BTC</td> 
                   <td>$16,475.50</td>
                   <td>36.7%</td>
                   <td>-76.1%</td>
@@ -54,7 +54,7 @@
                 </tr>
                 <tr>
                     <td>Etherium</td>
-                    <td>ETH</td>
+                    <td>ETH</td> 
                     <td>$1,221.94</td>
                     <td>16.9%</td>
                     <td style="color:red">-74.9%</td>
@@ -66,7 +66,7 @@
                 </tr>
                 <tr>
                     <td>BNB</td>
-                    <td>BNB</td>
+                    <td>BNB</td> 
                     <td>$296.48</td>
                     <td>5.6%</td>
                     <td style="color:red">-56.8%</td>
@@ -78,7 +78,7 @@
             </table>
         </div>
 
-
+        
         <div id="clearLocal">
             <p id="clearText" data-toggle="tooltip" title="Clicking here will clear Local Storage.">Clear Local Storage</p>
         </div>
@@ -88,6 +88,6 @@
 
         <!-- Bootstrap Script -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
-
+ 
     </body>
 </html>
