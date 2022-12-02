@@ -36,13 +36,24 @@ A live version of this app is hosted on [Github.io.](https://pclarytx10.github.i
 
 ### Stretch Goals:
 
-- [ ] Add Coin Image to Table Row
+- [x] Add Coin Image to Table Row
+- [ ] Add logic to test for all "Approved US Markets"
 - [ ] LocalStorage of User Input
   - [ ] Refresh of value on new page load
   
 ### Future Enhancements:
 
-- [ ] Position Tracking 
+- [ ] Research Tracking
+  - [ ] Research Source
+  - [ ] Research Notes
+  - [ ] Risk Level
+    - [ ] RL Automation (Market Cap, Social Score, Etc.)
+- [ ] Position Tracking
+  - [ ] Exchange or Wallet
+  - [ ] Custodial or Non-Custodial  
+  - [ ] Position Size vs Portfolio
+  - [ ] Risk Level 
+    - [ ] RL Automation (Coin RL, Position Size, Custodial Factors)
 - [ ] Advanced Reporting
   - [ ] Portfolio Sizing
   - [ ] Graphs
