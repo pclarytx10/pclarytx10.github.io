@@ -1,10 +1,15 @@
-let globalData, globalMC, coinList, coinID, coinData, coinMarketData, coinRow, $newCrypto
+let globalData, globalMC, coinList, coinID, coinData, coinMarketData, coinRow, $newCrypto, storedDate 
+let userTokens = []
 
 const apiRoot ="https://api.coingecko.com/api/v3/"
 // API Methods
 const global = 'global' //get cc global data
 const getList = 'coins/list' //list of all supported cc, cache for later queries
 const getCoin = 'coins/' //pull coin info add coin id to string as input
+
+// localStorage functions
+// localStorage.setItem("cryptoList", JSON.stringify(coinList));
+// localStorage.setItem("storedTokens", JSON.stringify(userTokens));
 
 const $ttlCurrencies = $('#ttlCurrencies');
 const $ttlMarketCap = $('#ttlMarketCap');
@@ -32,16 +37,43 @@ $.ajax({
     }
 );
 
-// cache coin data for lookup 
-$.ajax({
-    url:apiRoot + getList
-}).then(
-    (data) => {
-        coinList = data;
-        // array of coin objects, symbols are lower case, names are capitalized
-        // console.log(coinList[0]);
-        // console.log(coinList.find((coin) => coin.symbol=="eth"));
-});
+// check localStorage for cached coin data
+storedDate = new Date(localStorage.getItem("listDate"))
+
+if (checkElapsedTime() > 24){
+    callListAPI()
+} else if (localStorage.getItem("cryptoList") !== null && localStorage.getItem("cryptoList").length > 0) {
+    coinList = JSON.parse(localStorage.getItem("cryptoList"));
+    storedDate = new Date(localStorage.getItem("listDate"))
+    console.log('list exists, cache from local');
+} else {
+    callListAPI()
+}
+
+// cache coin data to memory for lookup 
+function callListAPI() {
+        $.ajax({
+            url:apiRoot + getList
+        }).then(
+            (data) => {
+                coinList = data;
+                // push new list and timestamp to localStorage
+                localStorage.setItem("cryptoList", JSON.stringify(coinList));
+                localStorage.setItem("listDate",Date())
+                storedDate = new Date(localStorage.getItem("listDate"))
+                console.log('list cached from API');
+        });
+}
+
+// test for time elapsed, change return to switch between min and hours
+function checkElapsedTime() {
+    const startTime = storedDate.getTime();
+    const endTime = Date.now();
+    let result = ''
+    // minutes = (endTime - startTime) / 60000
+    hours = (endTime - startTime) / 3600000
+    return hours;
+}
 
 // varibles needed for table
 let coinName, coinSymbol, coinUSD, coinChange, coinMCap, coinATHPercent, coinATH, coinATHDate, coinMarkets, coinImage
@@ -49,8 +81,8 @@ let btnRow = '<td class="dangerBtn"><button type="button" class="btn btn-danger 
 
 // clear local storage
 $('#clearText').on('click',function() {
-    //your javacript
     alert("Clear local storage")
+    localStorage.clear();
 });
 
 // submit button
@@ -60,19 +92,15 @@ $('#submitBtn').on('click', function(evt) {
         $newCrypto = $newCrypto.charAt(0).toUpperCase() + $newCrypto.slice(1);
     } else {
         $newCrypto = $newCrypto.toLowerCase()
-        // console.log($newCrypto);
     }
     $('#cryptoInput').prop('value','');
     coinLookUp($newCrypto);
-    // console.log($newCrypto);
 });
 
 // accept input on enter keypress in input form
 $("form").on('keydown', function(evt) {
     const tgt = evt.keyCode
-    // console.log(tgt);
     if (tgt === 13) {
-        // console.log("Enter was pressed");
         $newCrypto = $('#cryptoInput').prop('value');
         if($newCrypto.length > 5) {
             $newCrypto = $newCrypto.charAt(0).toUpperCase() + $newCrypto.slice(1);
@@ -81,15 +109,22 @@ $("form").on('keydown', function(evt) {
         }
         $('#cryptoInput').prop('value','');
         coinLookUp($newCrypto);
-        // console.log($newCrypto);
     } else {}
-    
   });
 
 // create btc row
 getCoinData('bitcoin')
 
-// $('.btn-danger').remove()
+// load userTokens from localStorage
+if (localStorage.getItem("storedTokens") !== null && localStorage.getItem("storedTokens").length > 0) {
+    userTokens = JSON.parse(localStorage.getItem("storedTokens"));
+    // console.log(JSON.parse(localStorage.getItem("storedTokens")));
+    $.each(userTokens, function(idx, value){
+        getCoinData(value);
+    });
+} else {
+    localStorage.setItem("storedTokens","");
+}
 
 // code snipet to format market cap
 function numberWithCommas(x) {
@@ -104,13 +139,41 @@ function coinLookUp(token) {
         alert('The token you have entered returns more than one cryptocurrency. Please enter the name of the token instead.')
     } else if (coinList.find((coin) => coin.symbol==token)){
         coinID = coinList.find((coin) => coin.symbol==token).id
-        getCoinData(coinID)
+        getCoinData(coinID);
+        tokenStore(coinID);
     } else if (coinList.find((coin) => coin.name==token)) {
         coinID = coinList.find((coin) => coin.name==token).id
-        getCoinData(coinID)
+        getCoinData(coinID);
+        tokenStore(coinID);
     } else {
         alert(`No matching coin found. If your coin name contains multiple words, try capitalizing the second word or formatting it as it appears on CoinGecko's website. Example: "Binance USD" If you have entered a coin ticker that was not found, please try using the full name of the coin. Example: Polygon instead of MATIC`)
     };
+}
+
+// existing coin lookup and delete
+function localLookUp(token) {
+    coinID = coinList.find((coin) => coin.name==token).id;
+    // console.log(`${token}, ${coinID}`);
+    tokenDrop(coinID);
+}
+
+// sync localStorage and userTokens
+function tokenStore(token) {
+    userTokens.push(token);
+    localStorage.setItem("storedTokens", JSON.stringify(userTokens));
+}
+
+function tokenDrop(token) {
+    console.log(`Dropping ${token}`);
+    // userTokens.filter(coin => coin != token);
+    let tokenIdx = userTokens.findIndex(coin => coin == token);
+    for( var i = 0; i < userTokens.length; i++){   
+        if ( userTokens[i] === token) { 
+            userTokens.splice(i, 1); 
+        }
+    };
+    localStorage.setItem("storedTokens", JSON.stringify(userTokens));
+    console.log(userTokens);
 }
 
 // pull coin information 
@@ -161,6 +224,7 @@ const usApprovedExchanges = [
     "Gemini",
     "Binance US",
 ]
+
 //  coinMarketData
 function getMarketData(objIn) {
     coinMarketData = objIn
@@ -172,7 +236,6 @@ function getMarketData(objIn) {
     $.each(coinMarketData, function(index, value){
         marketsArray.push(coinMarketData[index].market.name)
         marketsArray = marketsArray.filter(unique)
-        // console.log(marketsArray);
     });
     
     if (marketsArray.includes('Coinbase Exchange')) {
@@ -189,8 +252,7 @@ function getMarketData(objIn) {
 function createTableRow(coinObj) {
     getMarketData(coinObj.tickers);
     coinImage = `<img src="${coinObj.image.small}" width="20px" alt="${coinObj.name}" style="margin-right: 3px"></img>`
-    console.log(coinImage);
-    coinName = `<td>` + coinImage + coinObj.name + `</td>`;
+    coinName = `<td class="ccName">` + coinImage + coinObj.name + `</td>`;
     coinSymbol = `<td>` + coinObj.symbol.toUpperCase() + `</td>`; 
     coinUSD = `<td>$` + formatCurrency(coinObj.market_data.current_price.usd) + `</td>`;
     // console.log(coinObj.market_data.price_change_percentage_24h);
@@ -206,35 +268,46 @@ function createTableRow(coinObj) {
     });
     coinATHDate = `<td>` + newDate + `</td>`; 
     coinMarkets = `<td>${selectMarkets.join(', ')}</td>`; 
-    let tableRow = `<tr>
-                    ${coinName}
-                    ${coinSymbol}
-                    ${coinUSD}
-                    ${coinChange}
-                    ${coinMCap}
-                    ${coinATH}
-                    ${coinATHPercent}
-                    ${coinATHDate}
-                    ${coinMarkets}
-                    ${btnRow}
-                    </tr>`
-    // console.log(tableRow);
+    let tableRow = ""
+    if (coinObj.name === 'Bitcoin') {
+        // $('.dangerBtn').remove();
+        tableRow = `<tr>
+        ${coinName}
+        ${coinSymbol}
+        ${coinUSD}
+        ${coinChange}
+        ${coinMCap}
+        ${coinATH}
+        ${coinATHPercent}
+        ${coinATHDate}
+        ${coinMarkets}
+        </tr>`
+    } else {
+        tableRow = `<tr class="tableRow">
+        ${coinName}
+        ${coinSymbol}
+        ${coinUSD}
+        ${coinChange}
+        ${coinMCap}
+        ${coinATH}
+        ${coinATHPercent}
+        ${coinATHDate}
+        ${coinMarkets}
+        ${btnRow}
+        </tr>`
+    }
     $("#coinsTable").append(tableRow)
     testRowStyling()
-    if (coinObj.name === 'Bitcoin') {
-        $('.dangerBtn').remove();
-    }
 }
 
 // add an event listener for "#coinsTable" remove button
-$("#coinsTable").on("click", function (evt) {
+$("#coinsTable").on("click", ".btn-danger", function (evt) {
     // console.log("Gonna Delete Somethnig....")
-    const tgt = evt.target
-    if($(tgt).hasClass('btn-danger')) {
-        // console.log($(tgtTR[1]))
-        const tgtTR = $(tgt).parentsUntil("tbody")
-        $(tgtTR).remove()
-    } else {}
+    const tgt = evt.target;
+    const tgtCoin = $(tgt).parentsUntil("tbody").find(".ccName").prop("innerText");
+    localLookUp(tgtCoin);
+    const tgtTR = $(tgt).parentsUntil("tbody");
+    $(tgtTR).remove();
 
 })
 
@@ -251,3 +324,5 @@ const exampleList = [
 $.each(exampleList, function(index, value){
     $("#exaList").append(`<li>${value}</li>`)
 });
+
+
