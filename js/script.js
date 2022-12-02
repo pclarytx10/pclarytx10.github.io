@@ -18,9 +18,9 @@ $.ajax({
         globalData = data;
         // console.log(globalData);
         let tempTCC = numberWithCommas(globalData.data.active_cryptocurrencies);
-        let tempTMC = numberWithCommas(globalData.data.total_market_cap.usd.toFixed(0));
         globalMC = globalData.data.total_market_cap.usd.toFixed(0);
-        let tempMCC = numberWithCommas(globalData.data.market_cap_change_percentage_24h_usd.toFixed(1));
+        let tempTMC = numberWithCommas(globalMC);
+        let tempMCC = globalData.data.market_cap_change_percentage_24h_usd.toFixed(1);
         $ttlCurrencies.text(`${tempTCC}`);
         $ttlMarketCap.text(`$${tempTMC}`);
         $marketCapChange.text(`${tempMCC}%`);
@@ -43,9 +43,8 @@ $.ajax({
         // console.log(coinList.find((coin) => coin.symbol=="eth"));
 });
 
-
 // varibles needed for table
-let coinName, coinSymbol, coinUSD, coinMCap, coinATHPercent, coinATH, coinATHDate, coinMarkets
+let coinName, coinSymbol, coinUSD, coinChange, coinMCap, coinATHPercent, coinATH, coinATHDate, coinMarkets
 let btnRow = '<td class="dangerBtn"><button type="button" class="btn btn-danger btn-sm">X</button></td>'
 
 // clear local storage
@@ -65,8 +64,27 @@ $('#submitBtn').on('click', function(evt) {
     // console.log($newCrypto);
     $('#cryptoInput').prop('value','');
     coinLookUp($newCrypto);
-    console.log($newCrypto);
+    // console.log($newCrypto);
 });
+
+// accept input on enter keypress in input form
+$("form").on('keydown', function(evt) {
+    const tgt = evt.keyCode
+    // console.log(tgt);
+    if (tgt === 13) {
+        // console.log("Enter was pressed");
+        $newCrypto = $('#cryptoInput').prop('value');
+        if($newCrypto.length > 4) {
+            $newCrypto = $newCrypto.charAt(0).toUpperCase() + $newCrypto.slice(1);
+        } else {
+            newCrypto = $newCrypto.toUpperCase()
+        }
+        $('#cryptoInput').prop('value','');
+        coinLookUp($newCrypto);
+        // console.log($newCrypto);
+    } else {}
+    
+  });
 
 // create btc row
 getCoinData('bitcoin')
@@ -75,18 +93,16 @@ getCoinData('bitcoin')
 
 // code snipet to format market cap
 function numberWithCommas(x) {
-    return x.toString().replace('/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g', ",");
+    var parts = x.toString().split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
 }
-
-// code snipet to prevent page refresh on enter in submit form
-// need to fix this so enter acts the same as button click
-// $(function() {
-//     $("form").submit(function() { return false; });
-// });
 
 // new coin lookup
 function coinLookUp(token) {
-    if (coinList.find((coin) => coin.symbol==token)){
+    if(coinList.filter((coin) => coin.symbol==token).length > 1 || token === 'sand') {
+        alert('The token you have entered returns more than one cryptocurrency. Please enter the name of the token instead.')
+    } else if (coinList.find((coin) => coin.symbol==token)){
         coinID = coinList.find((coin) => coin.symbol==token).id
         getCoinData(coinID)
     } else if (coinList.find((coin) => coin.name==token)) {
@@ -116,19 +132,22 @@ function formatCurrency(currency) {
         return currency.toFixed(2)
     } else {
         return numberWithCommas(currency.toFixed(2))
+        // return currency.toFixed(2)
     }
 }
 
 function testRowStyling() {
     rowArray = $('.athPer')
     $.each(rowArray, function(index, value){
-        rowVal = rowArray[index].innerText.slice(0, -1); 
+        rowVal = rowArray[index].innerText
+        rovVal = rowVal.slice(0, -1); 
         if (rowVal > 0) {
             rowArray.attr('style','color:green;')
         } else {
             rowArray.attr('style','color:red;')
         };
     });
+    
 }
 //test on load, also test when new row is created in createTableRow
 testRowStyling()
@@ -165,8 +184,6 @@ function getMarketData(objIn) {
     if (marketsArray.includes('Uniswap (v2)')) {
         selectMarkets.push('Uniswap')
     };
-  
-    // console.log(selectMarkets);
 }
 
 function createTableRow(coinObj) {
@@ -174,9 +191,11 @@ function createTableRow(coinObj) {
     coinName = `<td>` + coinObj.name + `</td>`;
     coinSymbol = `<td>` + coinObj.symbol.toUpperCase() + `</td>`; 
     coinUSD = `<td>$` + formatCurrency(coinObj.market_data.current_price.usd) + `</td>`;
+    // console.log(coinObj.market_data.price_change_percentage_24h);
+    coinChange = `<td class="athPer">` + coinObj.market_data.price_change_percentage_24h.toFixed(1) + `%</td>`
     let marketCap = coinObj.market_data.market_cap.usd / globalMC * 100
     coinMCap = `<td>` + marketCap.toFixed(1) + `%</td>`; 
-    coinATHPercent = `<td class="athPer">` + coinObj.market_data.ath_change_percentage.usd.toFixed(2) + `</td>`;
+    coinATHPercent = `<td class="athPer">` + coinObj.market_data.ath_change_percentage.usd.toFixed(1) + `%</td>`;
     coinATH = `<td>$` + formatCurrency(coinObj.market_data.ath.usd) + `</td>`;
     const newDate = new Date(coinObj.market_data.ath_date.usd).toLocaleDateString('en-US', {
     day:   'numeric',
@@ -189,9 +208,10 @@ function createTableRow(coinObj) {
                     ${coinName}
                     ${coinSymbol}
                     ${coinUSD}
+                    ${coinChange}
                     ${coinMCap}
-                    ${coinATHPercent}
                     ${coinATH}
+                    ${coinATHPercent}
                     ${coinATHDate}
                     ${coinMarkets}
                     ${btnRow}
