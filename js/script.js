@@ -221,17 +221,20 @@ $(function() {
     }
 
     function testRowStyling() {
-        rowArray = $('.athPer, .perChange')
+        rowStyling($('.perChange'));
+        rowStyling($('.athPer'));    
+    }
+
+    function rowStyling(rowArray) {
         $.each(rowArray, function(index, value){
-            rowVal = rowArray[index].innerText
-            rovVal = rowVal.slice(0, -1); 
+            let rowVal = rowArray[index].innerText
+            rowVal = rowVal.slice(0, -1); 
             if (rowVal > 0) {
                 rowArray.attr('style','color:green;')
             } else {
                 rowArray.attr('style','color:red;')
             };
         });
-        
     }
 
     // const usApprovedExchanges = [
